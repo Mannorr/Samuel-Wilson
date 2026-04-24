@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SW Admin — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #0a0a0a;
+      --bg2:      #111111;
+      --bg3:      #1a1a1a;
+      --fg:       #f0ede8;
+      --fg2:      #9a9590;
+      --fg3:      #4a4742;
+      --line:     #222222;
+      --accent:   #c8ff00;
+      --accent2:  #ff6b35;
+      --accent3:  #00d4ff;
+      --accent4:  #ff3d6e;
+      --danger:   #ff4444;
+      --success:  #44cc66;
+      --font-disp:'Playfair Display', Georgia, serif;
+      --font-mono:'DM Mono', monospace;
+      --font-body:'DM Sans', system-ui, sans-serif;
+      --ease:     cubic-bezier(0.16,1,0.3,1);
+    }
+    [data-theme="light"] {
+      --bg:   #f5f2ed; --bg2: #ece8e1; --bg3: #e0dbd3;
+      --fg:   #0f0d0b; --fg2: #5a5550; --fg3: #b0ada8;
+      --line: #d8d4cc;
+      --accent: #5c00ff; --accent2: #e84a00;
+      --accent3: #0071cc; --accent4: #cc004a;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--fg);
+      font-family: var(--font-body); font-size: 14px; font-weight: 300;
+      line-height: 1.5; transition: background 0.4s, color 0.4s;
+      min-height: 100vh;
+    }
+
+    /* ─── LOCK SCREEN ─────────────────────────────────────── */
+    #lock-screen {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--bg);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 32px;
+    }
+    #lock-screen.hidden { display: none; }
+    .lock-logo {
+      width: 64px; height: 64px;
+      background: var(--fg); color: var(--bg);
+      display: grid; place-items: center;
+      font-family: var(--font-disp); font-size: 22px; font-weight: 900;
+    }
+    .lock-label {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--fg3); text-align: center;
+    }
+    .lock-input {
+      background: var(--bg2); border: 1px solid var(--line);
+      color: var(--fg); font-family: var(--font-mono);
+      font-size: 20px; letter-spacing: 0.3em;
+      padding: 16px 24px; width: 220px; text-align: center;
+      outline: none; transition: border-color 0.2s;
+    }
+    .lock-input:focus { border-color: var(--fg2); }
+    .lock-input.error { border-color: var(--danger); animation: shake 0.3s; }
+    .lock-btn {
+      background: var(--fg); color: var(--bg);
+      border: none; cursor: pointer;
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      padding: 14px 32px; transition: opacity 0.2s;
+      width: 220px;
+    }
+    .lock-btn:hover { opacity: 0.85; }
+    .lock-hint {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--fg3); letter-spacing: 0.1em;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    /* ─── SIDEBAR ──────────────────────────────────────────── */
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    sidebar {
+      background: var(--bg2); border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      padding: 28px 0; position: fixed; top: 0; left: 0;
+      width: 220px; height: 100vh;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 24px 28px;
+      border-bottom: 1px solid var(--line); margin-bottom: 24px;
+    }
+    .sidebar-logo .sw {
+      width: 34px; height: 34px;
+      background: var(--fg); color: var(--bg);
+      display: grid; place-items: center;
+      font-family: var(--font-disp); font-size: 13px; font-weight: 900;
+    }
+    .sidebar-logo span {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg2);
+    }
+    .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 0 12px; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; color: var(--fg3);
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; transition: all 0.15s;
+      background: none; border: none; width: 100%; text-align: left;
+    }
+    .sidebar-link:hover, .sidebar-link.active {
+      background: var(--bg3); color: var(--fg);
+    }
+    .sidebar-link.active { color: var(--accent); }
+    .sidebar-link .dot {
+      width: 6px; height: 6px;
+      background: currentColor; flex-shrink: 0;
+    }
+    .sidebar-footer { padding: 16px 24px; border-top: 1px solid var(--line); }
+    .sidebar-footer a {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--fg3); text-decoration: none;
+      display: flex; align-items: center; gap: 8px; transition: color 0.2s;
+    }
+    .sidebar-footer a:hover { color: var(--fg); }
+    .theme-toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px 0;
+    }
+    .theme-toggle-label {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg3);
+    }
+    .toggle-switch {
+      width: 36px; height: 20px;
+      background: var(--bg3); border: 1px solid var(--line);
+      border-radius: 10px; cursor: pointer; position: relative;
+      transition: background 0.3s;
+    }
+    .toggle-switch.on { background: var(--accent); }
+    .toggle-switch::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 14px; height: 14px;
+      background: var(--bg); border-radius: 50%;
+      transition: transform 0.3s;
+    }
+    .toggle-switch.on::after { transform: translateX(16px); }
+
+    /* ─── MAIN ─────────────────────────────────────────────── */
+    main {
+      margin-left: 220px; padding: 48px;
+      min-height: 100vh;
+    }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title {
+      font-family: var(--font-disp);
+      font-size: 32px; font-weight: 400;
+      letter-spacing: -0.02em; margin-bottom: 8px;
+    }
+    .page-sub {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--fg3); margin-bottom: 48px;
+    }
+
+    /* ─── DASHBOARD CARDS ─────────────────────────────────── */
+    .stat-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 48px;
+    }
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--line);
+      padding: 24px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .stat-card .label {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg3);
+    }
+    .stat-card .value {
+      font-family: var(--font-disp); font-size: 36px;
+      font-weight: 700; line-height: 1;
+    }
+    .stat-card .accent { color: var(--accent); }
+
+    /* ─── RECENT PROJECTS MINI LIST ───────────────────────── */
+    .recent-list { display: flex; flex-direction: column; gap: 2px; }
+    .recent-item {
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 16px; background: var(--bg2);
+      border: 1px solid var(--line); cursor: pointer;
+      transition: background 0.2s;
+    }
+    .recent-item:hover { background: var(--bg3); }
+    .recent-thumb {
+      width: 48px; height: 36px; object-fit: cover;
+      background: var(--bg3); flex-shrink: 0;
+    }
+    .recent-info { flex: 1; min-width: 0; }
+    .recent-title { font-weight: 400; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .recent-meta {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--fg3); letter-spacing: 0.08em;
+    }
+    .status-badge {
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 10px; flex-shrink: 0;
+    }
+    .status-badge.published { background: var(--success); color: var(--bg); }
+    .status-badge.draft { background: var(--fg3); color: var(--bg); }
+
+    /* ─── UPLOAD FORM ─────────────────────────────────────── */
+    .upload-grid { display: grid; grid-template-columns: 1fr 380px; gap: 40px; align-items: start; }
+    .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .form-label {
+      font-family: var(--font-mono); font-size: 10px;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg3);
+    }
+    .form-input, .form-select, .form-textarea {
+      background: var(--bg2); border: 1px solid var(--line);
+      color: var(--fg); font-family: var(--font-body); font-size: 14px;
+      padding: 12px 16px; outline: none; width: 100%;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--fg2); }
+    .form-textarea { resize: vertical; min-height: 120px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed var(--line); background: var(--bg2);
+      padding: 60px 24px; text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone.drag-over { border-color: var(--accent); background: var(--bg3); }
+    .drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .drop-zone .drop-icon { font-size: 32px; color: var(--fg3); margin-bottom: 12px; }
+    .drop-zone .drop-text {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg3);
+    }
+    .drop-zone .drop-hint { font-size: 12px; color: var(--fg3); margin-top: 6px; }
+
+    /* Image previews */
+    .image-previews {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 8px; margin-top: 16px;
+    }
+    .img-preview-item {
+      position: relative; aspect-ratio: 1;
+      border: 2px solid transparent; cursor: pointer;
+      background: var(--bg3);
+    }
+    .img-preview-item.cover-selected { border-color: var(--accent); }
+    .img-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .img-preview-item .rm-btn {
+      position: absolute; top: 2px; right: 2px;
+      background: var(--danger); color: #fff;
+      border: none; width: 18px; height: 18px;
+      font-size: 10px; cursor: pointer;
+      display: none; place-items: center;
+    }
+    .img-preview-item:hover .rm-btn { display: grid; }
+    .cover-badge {
+      position: absolute; bottom: 2px; left: 2px;
+      background: var(--accent); color: var(--bg);
+      font-family: var(--font-mono); font-size: 8px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 2px 5px; display: none;
+    }
+    .img-preview-item.cover-selected .cover-badge { display: block; }
+
+    /* Buttons */
+    .btn {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 14px 28px; cursor: pointer; border: none;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .btn-primary { background: var(--fg); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-ghost {
+      background: none; border: 1px solid var(--line); color: var(--fg2);
+    }
+    .btn-ghost:hover { border-color: var(--fg2); color: var(--fg); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { opacity: 0.85; }
+    .btn-row { display: flex; gap: 12px; margin-top: 8px; }
+
+    /* ─── PROJECTS PAGE ───────────────────────────────────── */
+    .proj-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2px;
+    }
+    .proj-card {
+      background: var(--bg2); border: 1px solid var(--line);
+      overflow: hidden;
+    }
+    .proj-card-img {
+      width: 100%; aspect-ratio: 4/3;
+      object-fit: cover; background: var(--bg3);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--fg3); font-family: var(--font-disp);
+      font-size: 24px;
+    }
+    .proj-card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .proj-card-body { padding: 16px; }
+    .proj-card-title { font-size: 15px; font-weight: 400; margin-bottom: 4px; }
+    .proj-card-meta {
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--fg3); letter-spacing: 0.08em; margin-bottom: 14px;
+    }
+    .proj-card-actions { display: flex; gap: 8px; }
+    .proj-card-actions .btn { padding: 8px 14px; font-size: 9px; }
+
+    /* ─── TOAST ───────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 32px; right: 32px;
+      background: var(--fg); color: var(--bg);
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 14px 24px;
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.4s var(--ease);
+      pointer-events: none; z-index: 500;
+    }
+    .toast.show { transform: none; opacity: 1; }
+
+    /* ─── CONFIRM MODAL ───────────────────────────────────── */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      z-index: 300; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal-bg.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--bg2); border: 1px solid var(--line);
+      padding: 40px; max-width: 400px; width: 90%;
+      transform: translateY(20px); transition: transform 0.3s var(--ease);
+    }
+    .modal-bg.open .modal { transform: none; }
+    .modal h3 { font-family: var(--font-disp); font-size: 22px; margin-bottom: 12px; }
+    .modal p { font-size: 13px; color: var(--fg2); margin-bottom: 28px; line-height: 1.7; }
+
+    @media (max-width: 1024px) {
+      .layout { grid-template-columns: 1fr; }
+      sidebar { display: none; }
+      main { margin-left: 0; padding: 24px; }
+      .stat-row { grid-template-columns: 1fr 1fr; }
+      .upload-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── LOCK SCREEN ──────────────────────────────────────── -->
+<div id="lock-screen">
+  <div class="lock-logo">SW</div>
+  <div style="text-align:center">
+    <div style="font-family:var(--font-disp);font-size:22px;margin-bottom:8px;">Admin Access</div>
+    <div class="lock-label">Enter your passcode to continue</div>
+  </div>
+  <input type="password" class="lock-input" id="lock-input" placeholder="••••" maxlength="20" />
+  <button class="lock-btn" id="lock-btn">Unlock</button>
+  <div class="lock-hint">Default passcode: 0000</div>
+</div>
+
+<!-- ─── APP ─────────────────────────────────────────────── -->
+<div class="layout" id="app" style="display:none">
+  <sidebar>
+    <div class="sidebar-logo">
+      <div class="sw">SW</div>
+      <span>Admin Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-link active" data-page="dashboard">
+        <div class="dot"></div> Dashboard
+      </button>
+      <button class="sidebar-link" data-page="upload">
+        <div class="dot"></div> Upload Project
+      </button>
+      <button class="sidebar-link" data-page="projects">
+        <div class="dot"></div> All Projects
+      </button>
+    </nav>
+    <div class="theme-toggle-row">
+      <span class="theme-toggle-label">Light mode</span>
+      <div class="toggle-switch" id="theme-sw"></div>
+    </div>
+    <div class="sidebar-footer" style="margin-top:8px">
+      <a href="index.html" target="_blank">↗ View Portfolio</a>
+    </div>
+  </sidebar>
+
+  <main>
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Overview · <span id="today-date"></span></div>
+      <div class="stat-row" id="stat-row"></div>
+      <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg3);margin-bottom:16px">Recent Projects</div>
+      <div class="recent-list" id="recent-list"></div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="page" id="page-upload">
+      <div class="page-title" id="upload-page-title">New Project</div>
+      <div class="page-sub" id="upload-page-sub">Upload your work to the portfolio</div>
+      <div class="upload-grid">
+        <div>
+          <div class="form-group">
+            <label class="form-label">Project Title *</label>
+            <input type="text" class="form-input" id="f-title" placeholder="e.g. Kora Brand Identity" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="f-category">
+                <option value="Identity">Identity</option>
+                <option value="Branding">Branding</option>
+                <option value="Packaging">Packaging</option>
+                <option value="Typography">Typography</option>
+                <option value="Motion">Motion</option>
+                <option value="UI/UX">UI/UX</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Year</label>
+              <input type="number" class="form-input" id="f-year" placeholder="2025" min="2000" max="2099" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Client Name</label>
+            <input type="text" class="form-input" id="f-client" placeholder="e.g. Kora Foods Ltd" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Project Description</label>
+            <textarea class="form-textarea" id="f-desc" placeholder="Describe the project, your approach, and the outcome…"></textarea>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" id="save-draft-btn">Save as Draft</button>
+            <button class="btn btn-primary" id="publish-btn" style="background:var(--accent);color:var(--bg)">Publish</button>
+            <button class="btn btn-ghost" id="cancel-edit-btn" style="display:none">Cancel Edit</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="form-label" style="margin-bottom:12px">Project Images</div>
+          <div class="drop-zone" id="drop-zone">
+            <input type="file" id="file-input" accept="image/*" multiple />
+            <div class="drop-icon">⬆</div>
+            <div class="drop-text">Drop images here or click to browse</div>
+            <div class="drop-hint">JPG, PNG, WebP · Click cover image to set as primary</div>
+          </div>
+          <div class="image-previews" id="image-previews"></div>
+          <div style="margin-top:16px;font-family:var(--font-mono);font-size:10px;color:var(--fg3);letter-spacing:0.08em">
+            Click any image to make it the cover. Hover to remove.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALL PROJECTS -->
+    <div class="page" id="page-projects">
+      <div class="page-title">All Projects</div>
+      <div class="page-sub">Manage, edit, or remove your work</div>
+      <div class="proj-grid" id="proj-grid"></div>
+    </div>
+  </main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal-bg" id="confirm-modal">
+  <div class="modal">
+    <h3>Delete Project?</h3>
+    <p>This will permanently remove this project from your portfolio. This action cannot be undone.</p>
+    <div class="btn-row">
+      <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+      <button class="btn btn-ghost" id="cancel-delete-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── PASSCODE ─────────────────────────────────────────── */
+const PASSCODE = localStorage.getItem('sw-passcode') || '0000';
+const lockScreen = document.getElementById('lock-screen');
+const appEl = document.getElementById('app');
+
+function checkLock() {
+  if (sessionStorage.getItem('sw-admin-unlocked') === '1') unlock(false);
+}
+function unlock(save = true) {
+  lockScreen.classList.add('hidden');
+  appEl.style.display = 'grid';
+  if (save) sessionStorage.setItem('sw-admin-unlocked', '1');
+  renderDashboard(); renderAllProjects();
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+}
+document.getElementById('lock-btn').addEventListener('click', tryUnlock);
+document.getElementById('lock-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+function tryUnlock() {
+  const val = document.getElementById('lock-input').value;
+  if (val === PASSCODE) { unlock(); }
+  else {
+    const inp = document.getElementById('lock-input');
+    inp.classList.add('error');
+    inp.value = '';
+    setTimeout(() => inp.classList.remove('error'), 400);
+  }
+}
+checkLock();
+
+/* ─── THEME ────────────────────────────────────────────── */
+const html = document.documentElement;
+const sw = document.getElementById('theme-sw');
+function setTheme(t) {
+  html.setAttribute('data-theme', t);
+  sw.classList.toggle('on', t === 'light');
+  localStorage.setItem('sw-theme', t);
+}
+sw.addEventListener('click', () => setTheme(html.dataset.theme === 'dark' ? 'light' : 'dark'));
+setTheme(localStorage.getItem('sw-theme') || 'dark');
+
+/* ─── NAVIGATION ───────────────────────────────────────── */
+const pages = { dashboard: 'page-dashboard', upload: 'page-upload', projects: 'page-projects' };
+document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
+  link.addEventListener('click', () => navigateTo(link.dataset.page));
+});
+function navigateTo(pg) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pages[pg]).classList.add('active');
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.querySelector(`.sidebar-link[data-page="${pg}"]`).classList.add('active');
+  if (pg === 'dashboard') renderDashboard();
+  if (pg === 'projects') renderAllProjects();
+  if (pg === 'upload' && !editingId) resetUploadForm();
+}
+
+/* ─── STORAGE ──────────────────────────────────────────── */
+function getProjects() {
+  try { return JSON.parse(localStorage.getItem('sw-projects') || '[]'); } catch { return []; }
+}
+function saveProjects(arr) { localStorage.setItem('sw-projects', JSON.stringify(arr)); }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+/* ─── TOAST ────────────────────────────────────────────── */
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ─── UPLOAD / IMAGES ──────────────────────────────────── */
+let uploadedImages = [];   // [{data, name}]
+let coverIndex = 0;
+let editingId = null;
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const previewsEl = document.getElementById('image-previews');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', () => handleFiles(fileInput.files));
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      uploadedImages.push({ data: e.target.result, name: file.name });
+      renderPreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderPreviews() {
+  previewsEl.innerHTML = '';
+  uploadedImages.forEach((img, i) => {
+    const item = document.createElement('div');
+    item.className = 'img-preview-item' + (i === coverIndex ? ' cover-selected' : '');
+    item.innerHTML = `<img src="${img.data}" alt="${img.name}"/><button class="rm-btn" title="Remove">✕</button><div class="cover-badge">Cover</div>`;
+    item.addEventListener('click', () => { coverIndex = i; renderPreviews(); });
+    item.querySelector('.rm-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      uploadedImages.splice(i, 1);
+      if (coverIndex >= uploadedImages.length) coverIndex = 0;
+      renderPreviews();
+    });
+    previewsEl.appendChild(item);
+  });
+}
+
+/* ─── SAVE PROJECT ─────────────────────────────────────── */
+function buildProject(published) {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { toast('Please enter a project title'); return null; }
+  // reorder so cover is first
+  const ordered = [...uploadedImages];
+  if (coverIndex > 0 && ordered.length) {
+    const [cov] = ordered.splice(coverIndex, 1);
+    ordered.unshift(cov);
+  }
+  return {
+    id: editingId || genId(),
+    title,
+    category: document.getElementById('f-category').value,
+    client: document.getElementById('f-client').value.trim(),
+    year: document.getElementById('f-year').value || new Date().getFullYear(),
+    description: document.getElementById('f-desc').value.trim(),
+    images: ordered,
+    published,
+    updatedAt: Date.now(),
+  };
+}
+
+function saveProject(published) {
+  const proj = buildProject(published);
+  if (!proj) return;
+  const projects = getProjects();
+  const idx = projects.findIndex(p => p.id === proj.id);
+  if (idx >= 0) projects[idx] = proj; else projects.unshift(proj);
+  saveProjects(projects);
+  toast(published ? '✓ Published!' : '✓ Saved as draft');
+  editingId = null;
+  resetUploadForm();
+  navigateTo('projects');
+}
+
+document.getElementById('save-draft-btn').addEventListener('click', () => saveProject(false));
+document.getElementById('publish-btn').addEventListener('click', () => saveProject(true));
+document.getElementById('cancel-edit-btn').addEventListener('click', () => { editingId = null; resetUploadForm(); });
+
+function resetUploadForm() {
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-category').value = 'Identity';
+  document.getElementById('f-client').value = '';
+  document.getElementById('f-year').value = '';
+  document.getElementById('f-desc').value = '';
+  uploadedImages = []; coverIndex = 0;
+  renderPreviews();
+  document.getElementById('upload-page-title').textContent = 'New Project';
+  document.getElementById('upload-page-sub').textContent = 'Upload your work to the portfolio';
+  document.getElementById('cancel-edit-btn').style.display = 'none';
+  editingId = null;
+}
+
+/* ─── EDIT PROJECT ─────────────────────────────────────── */
+function editProject(proj) {
+  editingId = proj.id;
+  document.getElementById('f-title').value = proj.title || '';
+  document.getElementById('f-category').value = proj.category || 'Identity';
+  document.getElementById('f-client').value = proj.client || '';
+  document.getElementById('f-year').value = proj.year || '';
+  document.getElementById('f-desc').value = proj.description || '';
+  uploadedImages = proj.images ? [...proj.images] : [];
+  coverIndex = 0; renderPreviews();
+  document.getElementById('upload-page-title').textContent = 'Edit Project';
+  document.getElementById('upload-page-sub').textContent = `Editing: ${proj.title}`;
+  document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+  navigateTo('upload');
+}
+
+/* ─── DELETE ───────────────────────────────────────────── */
+let deleteTarget = null;
+const modal = document.getElementById('confirm-modal');
+document.getElementById('cancel-delete-btn').addEventListener('click', () => modal.classList.remove('open'));
+document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+  if (!deleteTarget) return;
+  const projects = getProjects().filter(p => p.id !== deleteTarget);
+  saveProjects(projects);
+  modal.classList.remove('open');
+  toast('Project deleted');
+  renderDashboard(); renderAllProjects();
+});
+function deleteProject(id) { deleteTarget = id; modal.classList.add('open'); }
+
+/* ─── TOGGLE PUBLISH ───────────────────────────────────── */
+function togglePublish(id) {
+  const projects = getProjects();
+  const proj = projects.find(p => p.id === id);
+  if (!proj) return;
+  proj.published = !proj.published;
+  proj.updatedAt = Date.now();
+  saveProjects(projects);
+  toast(proj.published ? '✓ Published!' : '✓ Moved to draft');
+  renderDashboard(); renderAllProjects();
+}
+
+/* ─── DASHBOARD ────────────────────────────────────────── */
+function renderDashboard() {
+  const projects = getProjects();
+  const published = projects.filter(p => p.published);
+  const drafts = projects.filter(p => !p.published);
+  const cats = new Set(projects.map(p => p.category).filter(Boolean));
+
+  document.getElementById('stat-row').innerHTML = `
+    <div class="stat-card"><div class="label">Total Projects</div><div class="value">${projects.length}</div></div>
+    <div class="stat-card"><div class="label">Published</div><div class="value accent">${published.length}</div></div>
+    <div class="stat-card"><div class="label">Drafts</div><div class="value">${drafts.length}</div></div>
+    <div class="stat-card"><div class="label">Categories</div><div class="value">${cats.size}</div></div>
+  `;
+
+  const recentEl = document.getElementById('recent-list');
+  const recent = [...projects].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 6);
+  if (recent.length === 0) {
+    recentEl.innerHTML = `<div style="padding:32px;text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--fg3);letter-spacing:0.1em">No projects yet — upload your first one</div>`;
+    return;
+  }
+  recentEl.innerHTML = recent.map(p => `
+    <div class="recent-item" onclick="editProject(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+      ${p.images?.[0] ? `<img class="recent-thumb" src="${p.images[0].data}" alt="">` : `<div class="recent-thumb" style="display:flex;align-items:center;justify-content:center;font-family:var(--font-disp);font-size:14px;color:var(--fg3)">SW</div>`}
+      <div class="recent-info">
+        <div class="recent-title">${p.title}</div>
+        <div class="recent-meta">${p.category || '—'} · ${p.year || '—'}</div>
+      </div>
+      <div class="status-badge ${p.published ? 'published' : 'draft'}">${p.published ? 'Live' : 'Draft'}</div>
+    </div>
+  `).join('');
+}
+
+/* ─── ALL PROJECTS ─────────────────────────────────────── */
+function renderAllProjects() {
+  const projects = getProjects();
+  const grid = document.getElementById('proj-grid');
+  if (projects.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:60px;text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--fg3);letter-spacing:0.1em">No projects yet</div>`;
+    return;
+  }
+  grid.innerHTML = projects.map(p => `
+    <div class="proj-card">
+      <div class="proj-card-img">
+        ${p.images?.[0] ? `<img src="${p.images[0].data}" alt="${p.title}">` : 'SW'}
+      </div>
+      <div class="proj-card-body">
+        <div class="proj-card-title">${p.title}</div>
+        <div class="proj-card-meta">${p.category || '—'} · ${p.client || '—'} · ${p.year || '—'}</div>
+        <div style="margin-bottom:12px"><span class="status-badge ${p.published ? 'published' : 'draft'}" style="font-size:9px">${p.published ? 'Published' : 'Draft'}</span></div>
+        <div class="proj-card-actions">
+          <button class="btn btn-ghost" onclick='editProject(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Edit</button>
+          <button class="btn btn-ghost" onclick="togglePublish('${p.id}')">${p.published ? 'Unpublish' : 'Publish'}</button>
+          <button class="btn btn-danger" onclick="deleteProject('${p.id}')">Delete</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
